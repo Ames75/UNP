@@ -29,10 +29,28 @@ static void process_echo(int connfd) {
     }
 }
 
+static run_service(int listenfd) {
+    struct sockaddr_t cliaddr;
+    socklen_t clilen = sizeof(cliaddr);
+    set<int> connfdSet;
+    int connfd, nready;
+    int maxfd1 = listenfd + 1;
+    fd_set fdSet;
+    FD_ZERO(&fdSet);
+    FD_SET(listenfd, &fdSet);
+    if ((nready = select(maxfd1, &fdSet, NULL, NULL, NULL)) == -1 ) {
+        handle_error("select in run_service");
+    }
+    if ((connfd = accept4(listenfd,(SA*)&cliaddr, &client)) == -1) {
+        handle_error("accept4 ");
+    }
+    
+}
+
+
 int 
 main(int argc, char** argv) {
-    int listenfd, connfd;
-    pid_t childpid;
+    int listenfd;
     socklen_t clilen;
     struct sockaddr_in cliaddr, servaddr;
 
@@ -49,14 +67,7 @@ main(int argc, char** argv) {
     }
     listen(listenfd, LISTENQ);
     while(true) {
-        clilen = sizeof(cliaddr);
-        connfd = accept(listenfd, (sockaddr*) &cliaddr, &clilen);
-        if((childpid = fork()) == 0) {
-            close(listenfd);
-            process_echo(connfd);
-            exit(0);
-        }
-        close(connfd);
+
     }
     return 0;
 }
