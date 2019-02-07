@@ -13,13 +13,14 @@ static inline void process_str(char* buf, ssize_t length) {
         buf[i] = tolower(buf[i]);
     }
 }
-static void process_echo(int connfd) {
+
+// return true if client closes
+static bool process_echo(int connfd) {
     ssize_t n;
     char buf[MAXLINE];
     again:
     while((n = read(connfd, buf, MAXLINE)) > 0 ) {
         process_str(buf, n);
-        sleep(3);
         write(connfd, buf, n);
     }
     if(n < 0 && errno == EINTR) {
@@ -27,10 +28,15 @@ static void process_echo(int connfd) {
     } else if ( n < 0 ){
         err_sys("str_echo: read error");
     }
+    if (n == 0) {
+       close(connfd);
+       return true;  
+    }
+    return false;
 }
 
-static run_service(int listenfd) {
-    struct sockaddr_t cliaddr;
+static void run_service(int listenfd) {
+    struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
     set<int> connfdSet;
     int connfd, nready;
@@ -38,21 +44,41 @@ static run_service(int listenfd) {
     fd_set fdSet;
     FD_ZERO(&fdSet);
     FD_SET(listenfd, &fdSet);
-    if ((nready = select(maxfd1, &fdSet, NULL, NULL, NULL)) == -1 ) {
+    while(true) {
+     if ((nready = select(maxfd1, &fdSet, NULL, NULL, NULL)) == -1 ) {
         handle_error("select in run_service");
+     }
+    // if there is a new connection
+    if (FD_ISSET(listenfd, &fdSet)) { 
+    	if ((connfd = accept4(listenfd,(sockaddr*)&cliaddr, &clilen, 0)) == -1) {
+        	handle_error("accept4 ");
+    	} 
+        connfdSet.insert(connfd);
+        if( connfdSet.size() == (FD_SETSIZE - 3)) {
+	}  
+        // add new connfd into the set
+        FD_SET(connfd, &fdSet);
+        maxfd1 = maxfd1>(connfd+1)?maxfd1:(connfd+1);  
+        nready--;
     }
-    if ((connfd = accept4(listenfd,(SA*)&cliaddr, &client)) == -1) {
-        handle_error("accept4 ");
+    for(auto readyClient : connfdSet) {
+       if (nready == 0) break;
+       if(FD_ISSET(readyClient, &fdSet)) {
+           if ( process_echo(readyClient) ) {
+           	connfdSet.erase(readyClient);
+                FD_CLR(readyClient, &fdSet); 
+           }
+           nready--; 
+       }    
     }
-    
+  } 
 }
 
 
 int 
 main(int argc, char** argv) {
     int listenfd;
-    socklen_t clilen;
-    struct sockaddr_in cliaddr, servaddr;
+    struct sockaddr_in servaddr;
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
     bzero(&servaddr, sizeof(servaddr));
@@ -66,8 +92,6 @@ main(int argc, char** argv) {
         }
     }
     listen(listenfd, LISTENQ);
-    while(true) {
-
-    }
+    run_service(listenfd);  
     return 0;
 }
