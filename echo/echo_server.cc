@@ -19,7 +19,7 @@ static bool process_echo(int connfd) {
     ssize_t n;
     char buf[MAXLINE];
     again:
-    while((n = read(connfd, buf, MAXLINE)) > 0 ) {
+    if((n = read(connfd, buf, MAXLINE)) > 0 ) {
         process_str(buf, n);
         write(connfd, buf, n);
     }
@@ -29,6 +29,7 @@ static bool process_echo(int connfd) {
         err_sys("str_echo: read error");
     }
     if (n == 0) {
+       cout<< "a client has finished" << endl; 
        close(connfd);
        return true;  
     }
@@ -41,36 +42,38 @@ static void run_service(int listenfd) {
     set<int> connfdSet;
     int connfd, nready;
     int maxfd1 = listenfd + 1;
-    fd_set fdSet;
-    FD_ZERO(&fdSet);
-    FD_SET(listenfd, &fdSet);
+    fd_set fdSet, allSet;
+    FD_ZERO(&allSet);
+    FD_SET(listenfd, &allSet);
     while(true) {
-     if ((nready = select(maxfd1, &fdSet, NULL, NULL, NULL)) == -1 ) {
-        handle_error("select in run_service");
-     }
+        fdSet = allSet;
+        if ((nready = select(maxfd1, &fdSet, NULL, NULL, NULL)) == -1 ) {
+            handle_error("select in run_service");
+        }
     // if there is a new connection
-    if (FD_ISSET(listenfd, &fdSet)) { 
-    	if ((connfd = accept4(listenfd,(sockaddr*)&cliaddr, &clilen, 0)) == -1) {
-        	handle_error("accept4 ");
-    	} 
-        connfdSet.insert(connfd);
-        if( connfdSet.size() == (FD_SETSIZE - 3)) {
-	}  
-        // add new connfd into the set
-        FD_SET(connfd, &fdSet);
-        maxfd1 = maxfd1>(connfd+1)?maxfd1:(connfd+1);  
-        nready--;
-    }
-    for(auto readyClient : connfdSet) {
-       if (nready == 0) break;
-       if(FD_ISSET(readyClient, &fdSet)) {
-           if ( process_echo(readyClient) ) {
-           	connfdSet.erase(readyClient);
-                FD_CLR(readyClient, &fdSet); 
-           }
-           nready--; 
-       }    
-    }
+        if (FD_ISSET(listenfd, &fdSet)) { 
+        	if ((connfd = accept4(listenfd,(sockaddr*)&cliaddr, &clilen, 0)) == -1) {
+            	handle_error("accept4 ");
+        	} 
+            connfdSet.insert(connfd);
+            if( connfdSet.size() == (FD_SETSIZE - 3)) {
+                err_sys("to many open connections");
+    	    }  
+            // add new connfd into the set
+            FD_SET(connfd, &allSet);
+            maxfd1 = maxfd1>(connfd+1)?maxfd1:(connfd+1);  
+            nready--;
+        }
+        for(auto readyClient : connfdSet) {
+           if (nready == 0) break;
+           if(FD_ISSET(readyClient, &fdSet)) {
+               if ( process_echo(readyClient) ) {
+                    connfdSet.erase(readyClient);
+                    FD_CLR(readyClient, &allSet); 
+               }
+               nready--; 
+           }    
+        }
   } 
 }
 
