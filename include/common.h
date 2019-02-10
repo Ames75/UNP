@@ -13,6 +13,16 @@
 #include <errno.h>
 #include <iostream>
 #include <string>
+#include <set>
+#include <limits.h>
+#include <poll.h>
+/* Posix.1g requires that an #include of <poll.h> DefinE INFTIM, but many
+   systems still DefinE it in <sys/stropts.h>.  We don't want to include
+   all the streams stuff if it's not needed, so we just DefinE INFTIM here.
+   This is the standard value, but there's no guarantee it is -1. */
+#ifndef INFTIM
+#define INFTIM          (-1)    /* infinite poll timeout */
+#endif
 //#include <sys/select.h>
 
 
