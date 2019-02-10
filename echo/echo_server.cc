@@ -36,6 +36,7 @@ static bool process_echo(int connfd) {
     return false;
 }
 
+// use select
 static void run_service(int listenfd) {
     struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
@@ -77,6 +78,51 @@ static void run_service(int listenfd) {
   } 
 }
 
+static void run_service_poll(int listenfd) {
+    struct sockaddr_in cliaddr;
+    socklen_t clilen = sizeof(cliaddr);
+    struct pollfd clients[FOPEN_MAX];
+    int nready = 0;
+    clients[0].fd = listenfd;
+    clients[0].events = POLLRDNORM;
+    int clients_size = 1;
+    int connfd;
+    for ( int i=1; i<FOPEN_MAX; i++) {
+        clients[i].fd = -1;
+        clients[i].events = POLLRDNORM;
+    }
+    while(true) {
+        nready = poll(clients, clients_size, INFTIM);
+        if(clients[0].revents & POLLRDNORM) {
+            if ((connfd = accept4(listenfd,(sockaddr*)&cliaddr, &clilen, 0)) 
+                                                    == -1) {
+                handle_error("accept4 ");
+            } else {
+                for (int i = 1; i < FOPEN_MAX; i++) {
+                    if(clients[i].fd == -1) {
+                        clients[i].fd = connfd;
+                        if(clients_size < i+1) {
+                            clients_size = i+1;
+                        }
+                        break;
+                    }
+                }
+                nready--;
+            }
+        }
+        for ( int i = 1 ; i < clients_size; i++) {
+            if( nready <= 0 ) {
+                break;
+            }
+            if(clients[i].revents & ( POLLRDNORM | POLLERR ) ) {
+                if(process_echo(clients[i].fd)) {
+                    clients[i].fd = -1;
+                    nready--;
+                };
+            }
+        }
+    }
+}
 
 int 
 main(int argc, char** argv) {
