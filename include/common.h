@@ -16,6 +16,7 @@
 #include <set>
 #include <limits.h>
 #include <poll.h>
+
 /* Posix.1g requires that an #include of <poll.h> DefinE INFTIM, but many
    systems still DefinE it in <sys/stropts.h>.  We don't want to include
    all the streams stuff if it's not needed, so we just DefinE INFTIM here.
@@ -47,6 +48,61 @@ bool handle_error(const char* place) {
 	std::cout<<place<<" failure due to " << strerror(errno) << std::endl;
 	return false;
 }
+
+int my_bind(int sockfd, const struct sockaddr *addr,
+			   socklen_t addrlen) {
+	int result=0;
+	if ((result=bind(sockfd, (sockaddr*)addr, addrlen)) != 0) {
+		if(handle_error(std::string("bind in server"))) {
+			exit(1);
+		}
+	}
+	return result;
+}
+
+int my_inet_pton(int family, const char *strptr, void *addrptr) {
+    if(!inet_pton(family, strptr, addrptr)) {
+        std::cout<<"server ip address is wrong !"<<std::endl;
+        return 1;
+    }
+    return 0;
+};
+
+// here src is struct sockaddr
+const char* my_inet_ntop(int af, const sockaddr *src,
+                             char *dst, socklen_t size) {
+    if (af != AF_INET && af != AF_INET6) {
+        std::cout<<"address family type "<<af<<" not supported"<<std::endl;
+        return nullptr; 
+    }
+    const char* result;
+    if( af == AF_INET) {
+        result = inet_ntop(af,&((const sockaddr_in*)src)->sin_addr,dst, size);
+    } else {
+        result = inet_ntop(af,&((const sockaddr_in6*)src)->sin6_addr,dst, size);
+    }
+    
+    if(result == nullptr) {
+        handle_error("within my_inet_ntop");
+        exit(1);
+    }
+    return result;
+}
+
+uint16_t my_getSockPort(const sockaddr *src) {
+    int af = src->sa_family;
+    if (af != AF_INET && af != AF_INET6) {
+        std::cout<<"getSockPort:address family type "<<
+                 af<<" not supported"<<std::endl;
+        return 0; 
+    }
+    if (af == AF_INET) {
+        return htons(((const sockaddr_in*)src)->sin_port);
+    } else {
+        return htons(((const sockaddr_in6*)src)->sin6_port);
+    }
+}
+
 
 
 #endif
