@@ -16,6 +16,8 @@
 #include <set>
 #include <limits.h>
 #include <poll.h>
+#include <signal.h>
+
 
 /* Posix.1g requires that an #include of <poll.h> DefinE INFTIM, but many
    systems still DefinE it in <sys/stropts.h>.  We don't want to include
@@ -103,6 +105,12 @@ uint16_t my_getSockPort(const sockaddr *src) {
     }
 }
 
-
+sighandler_t my_signal(int signum, sighandler_t handler) {
+    sighandler_t result;
+    if((result = signal(signum, handler)) ==  SIG_ERR) {
+        handle_error("in my_signal");
+    }
+    return result;
+}
 
 #endif
