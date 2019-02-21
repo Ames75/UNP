@@ -5,16 +5,27 @@
 #include <string>
 #include <ctype.h>
 using namespace std;
+static size_t packet_count;
+
 static inline void process_str(char* buf, ssize_t length) {
     for(int i=0; i<length; i++) {
         buf[i] = tolower(buf[i]);
     }
 }
 
+static void 
+server_SIGINT_handler(int signo) {
+    cout<<"So far,"<<packet_count<<" packets processed"<<endl;
+    exit(0);
+}
+
 void udp_echo_service (int sockfd, sockaddr* cliaddr, socklen_t clilen) {
     int num_recv =  0;
     char mesg[MAXLINE];
     char fromIP[128];
+    if(my_signal(SIGINT,server_SIGINT_handler) == SIG_ERR) {
+       exit(1);
+    }
     while(true) {
         socklen_t len=clilen;
         num_recv = recvfrom( sockfd, mesg, MAXLINE, 0, cliaddr, &len);
@@ -22,8 +33,8 @@ void udp_echo_service (int sockfd, sockaddr* cliaddr, socklen_t clilen) {
         cout<<"msg received from "<< 
             std::string(my_inet_ntop(cliaddr->sa_family, cliaddr, fromIP, 128))
             <<" port " << my_getSockPort(cliaddr) << endl;
-        
         sendto(sockfd, mesg, num_recv, 0, cliaddr, len);
+        packet_count++;
     }
 }
 
