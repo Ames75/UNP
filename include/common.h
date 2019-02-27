@@ -105,6 +105,19 @@ uint16_t my_getSockPort(const sockaddr *src) {
     }
 }
 
+std::string my_sock_ntop(const struct sockaddr* src, socklen_t size) {
+    std::string result;
+    char ipString[128];
+    uint16_t port;
+    const char* tmp = my_inet_ntop(src->sa_family,
+                             src, ipString, sizeof(ipString));
+    if(tmp) result = std::string(tmp);
+    port = my_getSockPort(src);
+    if(port != 0) result += std::string(":")+std::to_string(port);
+    return result;
+}
+
+
 sighandler_t my_signal(int signum, sighandler_t handler) {
     sighandler_t result;
     if((result = signal(signum, handler)) ==  SIG_ERR) {
@@ -112,5 +125,13 @@ sighandler_t my_signal(int signum, sighandler_t handler) {
     }
     return result;
 }
+
+void
+my_getsockname(int fd, struct sockaddr *sa, socklen_t *salenptr)
+{
+	if (getsockname(fd, sa, salenptr) < 0)
+		handle_error("getsockname error");
+}
+
 
 #endif
