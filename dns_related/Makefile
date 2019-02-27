@@ -1,0 +1,21 @@
+
+CC=g++
+CXXFLAGS=-std=c++11
+CFLAGS = -I../include -ggdb -O0 -D_REENTRANT -Wall
+LIBS = ../lib/libhgjunp.a -lpthread
+
+PROGS = dns_server dns_client
+
+all: ${PROGS}
+
+dns_server:	dns_server.o
+		${CC} ${CXXFLAGS} ${CFLAGS} -o $@ dns_server.o ${LIBS}	
+
+dns_client: dns_client.o
+	     ${CC} ${CXXFLAGS} ${CFLAGS} -o $@ dns_client.o ${LIBS}
+
+%.o: %.cc
+	${CC} ${CXXFLAGS} ${CFLAGS} -c $<
+clean: 
+	rm -f ${PROGS} *.o
+	
