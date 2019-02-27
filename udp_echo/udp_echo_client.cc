@@ -35,6 +35,12 @@ static void udp_echo_client_connect(int sockfd, const sockaddr* servaddr,
     char sendbuffer[MAXLINE], recvbuffer[ MAXLINE + 1];
     char fromIP[128];
     connect(sockfd, const_cast<sockaddr*>(servaddr), servlen);
+    // display local address
+    struct sockaddr_in cliaddr;
+    socklen_t len = sizeof(cliaddr);
+    my_getsockname(sockfd,(struct sockaddr *) &cliaddr, &len);
+    cout << "local address is " << my_sock_ntop(
+                                    (struct sockaddr *)&cliaddr, len) << endl;
     while(fgets(sendbuffer, MAXLINE, stdin) != nullptr) {
         write(sockfd, sendbuffer, strlen(sendbuffer));
         n = read(sockfd, recvbuffer, MAXLINE);
