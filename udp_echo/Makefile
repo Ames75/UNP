@@ -1,8 +1,4 @@
-
-CC=g++
-CXXFLAGS=-std=c++11
-CFLAGS = -I../include -ggdb -O0 -D_REENTRANT -Wall
-LIBS = ../lib/libunp.a -lpthread
+-include ../unp_make.env 
 
 PROGS = udp_echo_server udp_echo_client
 

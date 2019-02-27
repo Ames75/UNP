@@ -36,23 +36,12 @@
 
 #define CHECK_ARG(num)  if ( argc < num ) usage();
 
-void err_sys(const char* x) 
-{ 
-    perror(x); 
-    exit(1); 
-}
+void err_sys(const char* x);
+// return true if we should exit the program
+bool handle_error(const std::string& place) ;
 
 // return true if we should exit the program
-bool handle_error(const std::string& place) {
-	std::cout<<place<<" failure due to " << strerror(errno) << std::endl;
-	return false;
-}
-
-// return true if we should exit the program
-bool handle_error(const char* place) {
-	std::cout<<place<<" failure due to " << strerror(errno) << std::endl;
-	return false;
-}
+bool handle_error(const char* place);
 
 int my_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 
