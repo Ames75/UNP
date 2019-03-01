@@ -41,6 +41,16 @@ void findIpForNames(const vector<string>& names) {
     }
 }
 
+void findNameForIps(const vector<string>& names) {
+    for (auto& dname:names) {
+        struct hostent *hptr;
+        if ((hptr = gethostbyname(dname.c_str())) != nullptr) {
+            ;
+        }
+    }
+}
+
+
 int main(int argc, char** argv) {
     CHECK_ARG(3);
     intStringHashMap_t arg_values;
@@ -50,6 +60,12 @@ int main(int argc, char** argv) {
         vector<string> names;
         tokenizeString(arg_values['n']," ", names);
         findIpForNames(names);
+    }
+
+    if(arg_values.count('i') != 0) {
+        vector<string> names;
+        tokenizeString(arg_values['i']," ", names);
+        findNameForIps(names);
     }
 
     return 0;
