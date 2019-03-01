@@ -60,6 +60,9 @@ sighandler_t my_signal(int signum, sighandler_t handler);
 void
 my_getsockname(int fd, struct sockaddr *sa, socklen_t *salenptr);
 
+void tokenizeString(const std::string& src, 
+                          const char* delimiter, 
+                          std::vector<std::string>& result);
 
 
 #endif

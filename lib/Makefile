@@ -8,7 +8,7 @@ OBJS := $(patsubst %.cc, %.o, $(SRCS))
 all : ${MYLIB}
 
 ${MYLIB} : ${OBJS}
-	ar cr $@ $<
+	ar cr $@ $^
 
 %.o : %.cc
 	$(CC) $(CXXFLAGS) ${CFLAGS} -c $< 

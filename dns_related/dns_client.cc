@@ -1,5 +1,6 @@
 #include "common.h"
 #include <unordered_map>
+#include <netdb.h>
 
 using namespace std;
 void usage() {
@@ -31,10 +32,25 @@ size_t buildOptValMap(intStringHashMap_t& arg_values,
     return arg_values.size();
 }
 
+void findIpForNames(const vector<string>& names) {
+    for (auto& dname:names) {
+        struct hostent *hptr;
+        if ((hptr = gethostbyname(dname.c_str())) != nullptr) {
+            ;
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     CHECK_ARG(3);
     intStringHashMap_t arg_values;
     buildOptValMap(arg_values, argc, argv, "i:n:");
     printOptValMap(arg_values);
+    if(arg_values.count('n') != 0) {
+        vector<string> names;
+        tokenizeString(arg_values['n']," ", names);
+        findIpForNames(names);
+    }
+
     return 0;
 }
