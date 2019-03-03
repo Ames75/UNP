@@ -33,10 +33,33 @@ size_t buildOptValMap(intStringHashMap_t& arg_values,
 }
 
 void findIpForNames(const vector<string>& names) {
+    char ipstr[INET_ADDRSTRLEN];
     for (auto& dname:names) {
         struct hostent *hptr;
         if ((hptr = gethostbyname(dname.c_str())) != nullptr) {
-            ;
+           cout << "official name is " << hptr->h_name << endl;
+           char** pptr = hptr->h_aliases;
+           cout << "alias names: ";
+           while(*pptr != nullptr) {
+                cout << *pptr++ << "; ";
+           }
+           cout << endl;
+           switch (hptr->h_addrtype) {
+                case AF_INET:
+                    pptr = hptr->h_addr_list;
+                    cout << "ips: ";
+                    while(*pptr != nullptr) {
+                        const char* result = inet_ntop(hptr->h_addrtype, 
+                                      (*pptr++),
+                                      ipstr,sizeof(ipstr));
+                        cout << std::string(result) << "; ";
+                    }
+                    cout << endl;
+                    break;
+                default:
+                    cout << "unsupported addr type" << endl;
+                    exit(1);
+           }
         }
     }
 }
@@ -45,7 +68,7 @@ void findNameForIps(const vector<string>& names) {
     for (auto& dname:names) {
         struct hostent *hptr;
         if ((hptr = gethostbyname(dname.c_str())) != nullptr) {
-            ;
+
         }
     }
 }
@@ -55,7 +78,7 @@ int main(int argc, char** argv) {
     CHECK_ARG(3);
     intStringHashMap_t arg_values;
     buildOptValMap(arg_values, argc, argv, "i:n:");
-    printOptValMap(arg_values);
+    // printOptValMap(arg_values);
     if(arg_values.count('n') != 0) {
         vector<string> names;
         tokenizeString(arg_values['n']," ", names);

@@ -27,9 +27,11 @@ const char* my_inet_ntop(int af, const sockaddr *src,
     }
     const char* result;
     if( af == AF_INET) {
-        result = inet_ntop(af,&((const sockaddr_in*)src)->sin_addr,dst, size);
+        result = inet_ntop(af,&(((const sockaddr_in*)src)->sin_addr),
+                            dst, size);
     } else {
-        result = inet_ntop(af,&((const sockaddr_in6*)src)->sin6_addr,dst, size);
+        result = inet_ntop(af,&(((const sockaddr_in6*)src)->sin6_addr),
+                            dst, size);
     }
     
     if(result == nullptr) {
