@@ -64,11 +64,39 @@ void findIpForNames(const vector<string>& names) {
     }
 }
 
-void findNameForIps(const vector<string>& names) {
-    for (auto& dname:names) {
+void findNameForIps(const vector<string>& ips) {
+    for (auto& ip:ips) {
         struct hostent *hptr;
-        if ((hptr = gethostbyname(dname.c_str())) != nullptr) {
-
+        cout << " queried ip is " << ip << endl;
+        struct in_addr addr; 
+        if(my_inet_pton(AF_INET, ip.c_str(),&addr) ==0) {
+            if ((hptr = gethostbyaddr(&addr, sizeof(addr), AF_INET)) 
+                        != nullptr) {
+                cout << "official name is " << hptr->h_name << endl;
+                cout << "alias names: ";
+                char** pptr = hptr->h_aliases;
+                while(*pptr != nullptr) {
+                     cout << *pptr++ << "; ";
+                }
+                cout << endl;
+                char ipstr[INET_ADDRSTRLEN];
+                switch (hptr->h_addrtype) {
+                case AF_INET:
+                    pptr = hptr->h_addr_list;
+                    cout << "ips: ";
+                    while(*pptr != nullptr) {
+                        const char* result = inet_ntop(hptr->h_addrtype, 
+                                      (*pptr++),
+                                      ipstr,sizeof(ipstr));
+                        cout << std::string(result) << "; ";
+                    }
+                    cout << endl;
+                    break;
+                default:
+                    cout << "unsupported addr type" << endl;
+                    exit(1);
+           }
+            }
         }
     }
 }
