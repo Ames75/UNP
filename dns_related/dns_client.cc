@@ -3,6 +3,8 @@
 #include <netdb.h>
 
 using namespace std;
+
+using charFuncMap_t = unordered_map<char, void(*)(const vector<string> &)>;
 void usage() {
     cout<<"Usage: udp_echo_client <option> ip/name list" <<endl;
 }
@@ -101,23 +103,53 @@ void findNameForIps(const vector<string>& ips) {
     }
 }
 
+class serventClass {
+public:
+    serventClass(struct servent* AServent):m_servent(AServent){};
+    void print() {
+        cout << "official service name: " << m_servent->s_name << endl;
+        char** aliases = m_servent->s_aliases;
+        cout << "aliases: ";
+        while(*aliases != nullptr)  {
+            cout << *aliases++ << "; ";
+        }
+    }
+private:
+     struct servent* m_servent;
+};
+
+void findServiceForPort( const vector<string>& ports) {
+    for (auto& portStr:ports) {
+        int portNum = std::stoi(portStr);
+        struct servent* result;
+        cout << "Port: " << portNum << endl;
+        if((result = getservbyport(htons(portNum), NULL))!= nullptr) {
+            serventClass(result).print();
+        } else {
+            handle_error("in findServiceForPort, after call to getservbyport");
+        }
+        cout << "*****************************" << endl;
+    }
+    
+}
+
+charFuncMap_t dnsCharFuncMap = {{'i', findNameForIps}, \
+                                {'n', findIpForNames}, \
+                                {'s', findServiceForPort}};
+
+void run_service(intStringHashMap_t::value_type& entry) {
+        vector<string> names;
+        tokenizeString(entry.second," ", names);
+        dnsCharFuncMap[entry.first](names);
+}
 
 int main(int argc, char** argv) {
     CHECK_ARG(3);
     intStringHashMap_t arg_values;
-    buildOptValMap(arg_values, argc, argv, "i:n:");
+    buildOptValMap(arg_values, argc, argv, "i:n:s:");
     // printOptValMap(arg_values);
-    if(arg_values.count('n') != 0) {
-        vector<string> names;
-        tokenizeString(arg_values['n']," ", names);
-        findIpForNames(names);
+    for (auto& entry:arg_values) {
+        run_service(entry);
     }
-
-    if(arg_values.count('i') != 0) {
-        vector<string> names;
-        tokenizeString(arg_values['i']," ", names);
-        findNameForIps(names);
-    }
-
     return 0;
 }
