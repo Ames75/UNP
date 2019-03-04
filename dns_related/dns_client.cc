@@ -113,6 +113,9 @@ public:
         while(*aliases != nullptr)  {
             cout << *aliases++ << "; ";
         }
+        cout << endl;
+        cout << "port is " << ntohs(m_servent->s_port);
+        cout << "  protocol is " << m_servent->s_proto << endl;
     }
 private:
      struct servent* m_servent;
@@ -133,9 +136,22 @@ void findServiceForPort( const vector<string>& ports) {
     
 }
 
+void findPortForService(const vector<string>& servs) {
+    for(auto& service:servs) {
+        struct servent* result;
+        cout << "ServiceName: " << service << endl;
+        if ((result = getservbyname(service.c_str(), NULL)) != nullptr) {
+            serventClass(result).print();
+        } else {
+            handle_error("findPortForService:");
+        }
+    }
+}
+
 charFuncMap_t dnsCharFuncMap = {{'i', findNameForIps}, \
                                 {'n', findIpForNames}, \
-                                {'s', findServiceForPort}};
+                                {'s', findServiceForPort}, 
+                                {'p', findPortForService}};
 
 void run_service(intStringHashMap_t::value_type& entry) {
         vector<string> names;
@@ -146,7 +162,7 @@ void run_service(intStringHashMap_t::value_type& entry) {
 int main(int argc, char** argv) {
     CHECK_ARG(3);
     intStringHashMap_t arg_values;
-    buildOptValMap(arg_values, argc, argv, "i:n:s:");
+    buildOptValMap(arg_values, argc, argv, "i:n:s:p:");
     // printOptValMap(arg_values);
     for (auto& entry:arg_values) {
         run_service(entry);
