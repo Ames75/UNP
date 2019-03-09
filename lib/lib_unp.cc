@@ -1,4 +1,6 @@
 #include "common.h"
+#include <netdb.h>
+
 int my_bind(int sockfd, const struct sockaddr *addr,
 			   socklen_t addrlen) {
 	int result=0;
@@ -82,4 +84,67 @@ my_getsockname(int fd, struct sockaddr *sa, socklen_t *salenptr)
 	if (getsockname(fd, sa, salenptr) < 0)
 		handle_error("getsockname error");
 }
+
+void printAddrInfo(const struct addrinfo* info) {
+    while(info != nullptr) {
+        std::string res;
+        if(info->ai_canonname) {
+            std::cout << "cname: " << info->ai_canonname << std::endl;
+        }
+        res = my_sock_ntop(info->ai_addr, info->ai_addrlen);
+        std::cout << res << std::endl;
+        info = info->ai_next;
+    }
+}
+struct addrinfo* host_serv(const char* host, const char* port, 
+                               int family, int socktype, bool verbose) {
+    struct addrinfo hints;
+    struct addrinfo* result;
+    bzero(&hints, sizeof(hints));
+    hints.ai_flags = hints.ai_flags | AI_CANONNAME;
+    hints.ai_family = family;
+    hints.ai_socktype = socktype;
+    int returnNo = getaddrinfo(host, port, &hints, &result);
+    if(returnNo == 0 && verbose) {
+        printAddrInfo(result);
+    } else {
+        std::cout << gai_strerror(returnNo) << std::endl;
+        return nullptr;
+    }
+    return result;
+}
+
+int my_tcp_connect(const char* host, const char* serv) {
+    int sockfd;
+    struct addrinfo *result;
+    struct addrinfo* tmp;
+
+    if( (result = host_serv(host, serv, AF_UNSPEC, SOCK_STREAM)) == nullptr ){
+        err_sys("my_tcp_connect failed");
+    }
+    while ( tmp ) {
+        sockfd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+        if(sockfd < 0) {
+            std::cout << "can't create socket for: " << std::endl;
+            printAddrInfo(tmp);
+            continue;
+        }
+        if(connect(sockfd, tmp->ai_addr, tmp->ai_addrlen) == 0) {
+            break;
+        } else {
+            handle_error("In my_tcp_connect fail to connect :");
+            printAddrInfo(tmp);
+        }
+        close(sockfd);
+        tmp = tmp->ai_next;
+    }
+    if( !tmp ) {
+        std::cout << " no connection established" << std::endl;
+        sockfd = -1;
+    }
+    freeaddrinfo(result);
+    return sockfd;
+}
+
+
 

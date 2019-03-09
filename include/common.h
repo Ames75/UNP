@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include <vector>
+#include <netdb.h>
 
 /* Posix.1g requires that an #include of <poll.h> DefinE INFTIM, but many
    systems still DefinE it in <sys/stropts.h>.  We don't want to include
@@ -64,5 +65,12 @@ void tokenizeString(const std::string& src,
                           const char* delimiter, 
                           std::vector<std::string>& result);
 
+void printAddrInfo(const struct addrinfo* info);
+
+struct addrinfo* host_serv(const char* host, const char* port, 
+                           int family, int socktype, bool verbose = false);
+
+// return successfully connected socket
+int my_tcp_connect(const char* host, const char* serv);
 
 #endif
