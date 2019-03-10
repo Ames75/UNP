@@ -107,7 +107,7 @@ struct addrinfo* host_serv(const char* host, const char* port,
     int returnNo = getaddrinfo(host, port, &hints, &result);
     if(returnNo == 0 && verbose) {
         printAddrInfo(result);
-    } else {
+    } else if( returnNo != 0) {
         std::cout << gai_strerror(returnNo) << std::endl;
         return nullptr;
     }
@@ -122,6 +122,7 @@ int my_tcp_connect(const char* host, const char* serv) {
     if( (result = host_serv(host, serv, AF_UNSPEC, SOCK_STREAM)) == nullptr ){
         err_sys("my_tcp_connect failed");
     }
+    tmp = result;
     while ( tmp ) {
         sockfd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
         if(sockfd < 0) {
@@ -146,5 +147,11 @@ int my_tcp_connect(const char* host, const char* serv) {
     return sockfd;
 }
 
+void
+my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr)
+{
+	if (getpeername(fd, sa, salenptr) < 0)
+		err_sys("getpeername error");
+}
 
 

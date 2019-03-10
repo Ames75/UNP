@@ -35,7 +35,7 @@
 #define LISTENQ 256
 #define ECHO_PORT 1313
 
-#define CHECK_ARG(num)  if ( argc < num ) usage();
+#define CHECK_ARG(num)  if ( argc < num ) { usage(); exit(1); }
 
 void err_sys(const char* x);
 // return true if we should exit the program
@@ -72,5 +72,9 @@ struct addrinfo* host_serv(const char* host, const char* port,
 
 // return successfully connected socket
 int my_tcp_connect(const char* host, const char* serv);
+
+void
+my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr);
+
 
 #endif
