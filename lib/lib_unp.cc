@@ -154,4 +154,23 @@ my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr)
 		err_sys("getpeername error");
 }
 
+int my_tcp_listen(const char* host, const char* port, socklen_t* addrlenp) {
+    struct addrinfo hints;
+    struct addrinfo* result;
+    bzero(hints, sizeof(hints);
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    
+    int returnNo = getaddrinfo(host,port,&hints,struct &result);
+    if( returnNo != 0) {
+        cout << "getaddrinfo failed due to " << gai_strerror(returnNo) << endl;
+        exit(1);
+    }
+    struct addrinfo* tmp = result;
+    while(!tmp)  {
+        listenfd
+    }
+}
+
 
