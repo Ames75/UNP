@@ -155,10 +155,22 @@ my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr)
 		err_sys("getpeername error");
 }
 
+int setsockopt(int sockfd, int level, int optname,
+                      const void *optval, socklen_t optlen) {
+    int code;
+    if ( (code = setsockopt(sockfd, level, optname, optval, optlen)) != 0) { 
+        std::cout << "optname" << optname << std::endl;
+        handle_error("in setsockopt");
+    }
+    return code;
+}
+
+
 void my_tcp_listen(const char* host, const char* port,
                          std::vector<int>& listenfds) {
     struct addrinfo hints;
     struct addrinfo* result;
+    int code = 1;
     bzero(&hints, sizeof(hints));
     hints.ai_flags = AI_PASSIVE;
     hints.ai_family = AF_UNSPEC;
@@ -174,6 +186,8 @@ void my_tcp_listen(const char* host, const char* port,
     while(!tmp)  {
         int listenfd = socket(tmp->ai_family, 
                               tmp->ai_socktype, tmp->ai_protocol);
+        setsockopt(listenfd,SOL_SOCKET,SO_REUSEADDR, &code,sizeof(code));
+        setsockopt(listenfd,SOL_SOCKET,SO_REUSEPORT, &code,sizeof(code));
         if(listenfd < 0) {
             handle_error("listenfd < 0");
             printAddrInfo(tmp);
