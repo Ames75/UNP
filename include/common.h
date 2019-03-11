@@ -76,5 +76,8 @@ int my_tcp_connect(const char* host, const char* serv);
 void
 my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr);
 
+void my_tcp_listen(const char* host, const char* port, 
+                        std::vector<int>& listenfds);
+
 
 #endif

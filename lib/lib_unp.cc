@@ -6,6 +6,7 @@ int my_bind(int sockfd, const struct sockaddr *addr,
 	int result=0;
 	if ((result=bind(sockfd, (sockaddr*)addr, addrlen)) != 0) {
 		if(handle_error(std::string("bind in server"))) {
+            close(sockfd);
 			exit(1);
 		}
 	}
@@ -154,23 +155,38 @@ my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr)
 		err_sys("getpeername error");
 }
 
-int my_tcp_listen(const char* host, const char* port, socklen_t* addrlenp) {
+void my_tcp_listen(const char* host, const char* port,
+                         std::vector<int>& listenfds) {
     struct addrinfo hints;
     struct addrinfo* result;
-    bzero(hints, sizeof(hints);
+    bzero(&hints, sizeof(hints));
     hints.ai_flags = AI_PASSIVE;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     
-    int returnNo = getaddrinfo(host,port,&hints,struct &result);
+    int returnNo = getaddrinfo(host,port,&hints,&result);
     if( returnNo != 0) {
-        cout << "getaddrinfo failed due to " << gai_strerror(returnNo) << endl;
+        std::cout << "getaddrinfo failed due to " 
+                    << gai_strerror(returnNo) << std::endl;
         exit(1);
     }
     struct addrinfo* tmp = result;
     while(!tmp)  {
-        listenfd
+        int listenfd = socket(tmp->ai_family, 
+                              tmp->ai_socktype, tmp->ai_protocol);
+        if(listenfd < 0) {
+            handle_error("listenfd < 0");
+            printAddrInfo(tmp);
+            std::cout << "try next addrinfo" << std::endl;
+            continue;
+        }
+        if ( my_bind(listenfd,tmp->ai_addr,tmp->ai_addrlen) == 0) {
+            listen(listenfd, LISTENQ);
+            listenfds.push_back(listenfd);
+        } 
+        tmp = tmp->ai_next;
     }
+    freeaddrinfo(result);
 }
 
 
