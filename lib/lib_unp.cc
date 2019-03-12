@@ -13,6 +13,15 @@ int my_bind(int sockfd, const struct sockaddr *addr,
 	return result;
 }
 
+int my_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    int result = accept(sockfd, addr, addrlen);
+    if( result < 0) {
+        handle_error("in my_accept");
+    }
+    return result;
+}
+
+
 int my_inet_pton(int family, const char *strptr, void *addrptr) {
     if(!inet_pton(family, strptr, addrptr)) {
         std::cout<<"server ip address is wrong !"<<std::endl;
@@ -155,7 +164,7 @@ my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr)
 		err_sys("getpeername error");
 }
 
-int setsockopt(int sockfd, int level, int optname,
+int my_setsockopt(int sockfd, int level, int optname,
                       const void *optval, socklen_t optlen) {
     int code;
     if ( (code = setsockopt(sockfd, level, optname, optval, optlen)) != 0) { 
@@ -183,11 +192,11 @@ void my_tcp_listen(const char* host, const char* port,
         exit(1);
     }
     struct addrinfo* tmp = result;
-    while(!tmp)  {
+    while(tmp != nullptr)  {
         int listenfd = socket(tmp->ai_family, 
                               tmp->ai_socktype, tmp->ai_protocol);
-        setsockopt(listenfd,SOL_SOCKET,SO_REUSEADDR, &code,sizeof(code));
-        setsockopt(listenfd,SOL_SOCKET,SO_REUSEPORT, &code,sizeof(code));
+        my_setsockopt(listenfd,SOL_SOCKET,SO_REUSEADDR, &code,sizeof(code));
+        my_setsockopt(listenfd,SOL_SOCKET,SO_REUSEPORT, &code,sizeof(code));
         if(listenfd < 0) {
             handle_error("listenfd < 0");
             printAddrInfo(tmp);

@@ -73,6 +73,8 @@ struct addrinfo* host_serv(const char* host, const char* port,
 // return successfully connected socket
 int my_tcp_connect(const char* host, const char* serv);
 
+int my_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+
 void
 my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr);
 
