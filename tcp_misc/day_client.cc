@@ -2,7 +2,7 @@
 using namespace std;
 
 void usage() {
-    cout << "usage: day_client <server> <port>" << endl;
+    cout << "usage: day_client [-u] [-t] <server> <port>" << endl;
 }
 
 void query_server( int sockfd ) {
@@ -16,6 +16,12 @@ void query_server( int sockfd ) {
 
 int main(int argc, char* argv[]) {
     CHECK_ARG(3);
+    intStringHashMap_t arg_values;
+    buildOptValMap(arg_values,argc,argv,"ut");
+    if(arg_values.find('u') != arg_values.end()) {
+
+    }
+        
     int sockfd;
     struct sockaddr_storage ss;
     socklen_t len = sizeof(ss);

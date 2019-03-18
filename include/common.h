@@ -20,6 +20,7 @@
 #include <getopt.h>
 #include <vector>
 #include <netdb.h>
+#include <unordered_map>
 
 /* Posix.1g requires that an #include of <poll.h> DefinE INFTIM, but many
    systems still DefinE it in <sys/stropts.h>.  We don't want to include
@@ -36,6 +37,13 @@
 #define ECHO_PORT 1313
 
 #define CHECK_ARG(num)  if ( argc < num ) { usage(); exit(1); }
+
+typedef struct {
+    sockaddr* m_addr;
+    socklen_t m_addrlen;
+} my_sockaddr_t;
+
+using intStringHashMap_t = std::unordered_map<int, std::string>;
 
 void err_sys(const char* x);
 // return true if we should exit the program
@@ -72,6 +80,9 @@ struct addrinfo* host_serv(const char* host, const char* port,
 
 // return successfully connected socket
 int my_tcp_connect(const char* host, const char* serv);
+void my_udp_connect(const char* host, const char* serv, 
+                    std::vector<my_sockaddr_t>& serverAddrs);
+
 
 int my_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 
@@ -80,6 +91,12 @@ my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr);
 
 void my_tcp_listen(const char* host, const char* port, 
                         std::vector<int>& listenfds);
+
+void printOptValMap(const intStringHashMap_t& optMap);
+
+size_t buildOptValMap(intStringHashMap_t& arg_values, 
+                            int argc, char** argv,
+                            const char* optstr);
 
 
 #endif

@@ -124,6 +124,37 @@ struct addrinfo* host_serv(const char* host, const char* port,
     return result;
 }
 
+
+void my_udp_connect(const char* host, const char* serv, 
+                    std::vector<my_sockaddr_t>& serverAddrs) {
+    int sockfd;
+    struct addrinfo *result, *tmp;
+    if( (result = host_serv(host, serv, AF_UNSPEC, SOCK_DGRAM)) == nullptr ){
+        err_sys("my_tcp_connect failed");
+    }
+    tmp = result;
+    while ( tmp ) {
+        sockfd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+        if(sockfd < 0) {
+            std::cout << "can't create socket for: " << std::endl;
+            printAddrInfo(tmp);
+            continue;
+        }
+        if(connect(sockfd, tmp->ai_addr, tmp->ai_addrlen) == 0) {
+            my_sockaddr_t addr;
+            addr.m_addr = result->ai_addr;
+            addr.m_addrlen = result->ai_addrlen;
+            serverAddrs.push_back(addr);
+        } else {
+            handle_error("In my_connect fail to connect :");
+            printAddrInfo(tmp);
+        }
+        tmp = tmp->ai_next;
+    }
+    freeaddrinfo(result);
+    return;
+}
+
 int my_tcp_connect(const char* host, const char* serv) {
     int sockfd;
     struct addrinfo *result;
