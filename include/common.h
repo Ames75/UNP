@@ -79,10 +79,14 @@ struct addrinfo* host_serv(const char* host, const char* port,
                            int family, int socktype, bool verbose = false);
 
 // return successfully connected socket
-int my_tcp_connect(const char* host, const char* serv);
+void my_tcp_connect(const char* host, const char* serv,
+                        std::vector<int>& serverSocks);
 void my_udp_connect(const char* host, const char* serv, 
-                    std::vector<my_sockaddr_t>& serverAddrs);
+                    std::vector<int>& serverAddrs);
 
+void my_common_connect(const char* host, const char* serv, 
+                        int family, int socktype, 
+                        std::vector<int>& serverSocks);
 
 int my_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 
@@ -97,6 +101,8 @@ void printOptValMap(const intStringHashMap_t& optMap);
 size_t buildOptValMap(intStringHashMap_t& arg_values, 
                             int argc, char** argv,
                             const char* optstr);
+
+void my_printSockAddr(int fd);
 
 
 #endif

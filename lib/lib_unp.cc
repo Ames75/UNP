@@ -124,9 +124,41 @@ struct addrinfo* host_serv(const char* host, const char* port,
     return result;
 }
 
+void my_common_connect(const char* host, const char* serv, 
+                        int family, int socktype, 
+                        std::vector<int>& serverSocks) 
+{
+    int sockfd;
+    struct addrinfo *result;
+    struct addrinfo* tmp;
+
+    if( (result = host_serv(host, serv, family, socktype)) == nullptr ){
+        err_sys("my_common_connect failed: ");
+    }
+    tmp = result;
+    while ( tmp ) {
+        sockfd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+        if(sockfd < 0) {
+            std::cout << "can't create socket for: " << std::endl;
+            printAddrInfo(tmp);
+            tmp = tmp->ai_next;
+            continue;
+        }
+        if(connect(sockfd, tmp->ai_addr, tmp->ai_addrlen) == 0) {
+            serverSocks.push_back(sockfd);
+        } else {
+            handle_error("In my_common_connect fail to connect :");
+            printAddrInfo(tmp);
+            close(sockfd);
+        }
+        tmp = tmp->ai_next;
+    }
+    freeaddrinfo(result);
+}
 
 void my_udp_connect(const char* host, const char* serv, 
-                    std::vector<my_sockaddr_t>& serverAddrs) {
+                    //std::vector<my_sockaddr_t>& serverAddrs
+                    std::vector<int>& serverSocks) {
     int sockfd;
     struct addrinfo *result, *tmp;
     if( (result = host_serv(host, serv, AF_UNSPEC, SOCK_DGRAM)) == nullptr ){
@@ -139,12 +171,14 @@ void my_udp_connect(const char* host, const char* serv,
             std::cout << "can't create socket for: " << std::endl;
             printAddrInfo(tmp);
             continue;
+            tmp = tmp->ai_next;
         }
         if(connect(sockfd, tmp->ai_addr, tmp->ai_addrlen) == 0) {
-            my_sockaddr_t addr;
-            addr.m_addr = result->ai_addr;
-            addr.m_addrlen = result->ai_addrlen;
-            serverAddrs.push_back(addr);
+            //my_sockaddr_t addr;
+            //addr.m_addr = result->ai_addr;
+            //addr.m_addrlen = result->ai_addrlen;
+            //serverAddrs.push_back(addr);
+            serverSocks.push_back(sockfd);
         } else {
             handle_error("In my_connect fail to connect :");
             printAddrInfo(tmp);
@@ -155,7 +189,8 @@ void my_udp_connect(const char* host, const char* serv,
     return;
 }
 
-int my_tcp_connect(const char* host, const char* serv) {
+void my_tcp_connect(const char* host, const char* serv,
+                        std::vector<int>& serverSocks) {
     int sockfd;
     struct addrinfo *result;
     struct addrinfo* tmp;
@@ -169,23 +204,19 @@ int my_tcp_connect(const char* host, const char* serv) {
         if(sockfd < 0) {
             std::cout << "can't create socket for: " << std::endl;
             printAddrInfo(tmp);
+            tmp = tmp->ai_next;
             continue;
         }
         if(connect(sockfd, tmp->ai_addr, tmp->ai_addrlen) == 0) {
-            break;
+            serverSocks.push_back(sockfd);
         } else {
             handle_error("In my_tcp_connect fail to connect :");
             printAddrInfo(tmp);
+            close(sockfd);
         }
-        close(sockfd);
         tmp = tmp->ai_next;
     }
-    if( !tmp ) {
-        std::cout << " no connection established" << std::endl;
-        sockfd = -1;
-    }
     freeaddrinfo(result);
-    return sockfd;
 }
 
 void
@@ -193,6 +224,18 @@ my_getpeername(int fd, struct sockaddr *sa, socklen_t *salenptr)
 {
 	if (getpeername(fd, sa, salenptr) < 0)
 		err_sys("getpeername error");
+}
+
+void my_printSockAddr(int fd) {
+    struct sockaddr_storage sa;
+    socklen_t len;
+    if (getpeername(fd, (struct sockaddr *)&sa, &len) < 0 ) {
+        perror("in my_printSockAddr");
+    } else {
+        std::cout << "connected to " 
+                  << my_sock_ntop((const struct sockaddr*)&sa, len) 
+                  << std::endl;
+    }
 }
 
 int my_setsockopt(int sockfd, int level, int optname,
