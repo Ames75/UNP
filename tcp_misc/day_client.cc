@@ -47,8 +47,10 @@ int main(int argc, char* argv[]) {
     char* port = argv[optind+1];
     if(arg_values.find('u') != arg_values.end()) {
         my_udp_connect(server,port, fd_socks);
-    }
-    if(arg_values.find('t') != arg_values.end()) {
+    } else if(arg_values.find('t') != arg_values.end()) {
+        my_tcp_connect(server,port, fd_socks);
+    } else {
+        my_udp_connect(server,port, fd_socks);
         my_tcp_connect(server,port, fd_socks);
     }
     cout << "here is the list of socks" << endl;
