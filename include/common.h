@@ -45,6 +45,7 @@ typedef struct {
 
 using intStringHashMap_t = std::unordered_map<int, std::string>;
 
+extern bool isDaemon = false;
 void err_sys(const char* x);
 // return true if we should exit the program
 bool handle_error(const std::string& place) ;
